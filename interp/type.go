@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -1065,11 +1066,20 @@ func (t *itype) methods() methodSet {
 	return getMethods(t)
 }
 
+// fixes vendored paths (source easyjson)
+func fixPkgPathVendoring(pkgPath string) string {
+	const vendor = "/vendor/"
+	if i := strings.LastIndex(pkgPath, vendor); i != -1 {
+		return pkgPath[i+len(vendor):]
+	}
+	return pkgPath
+}
+
 // id returns a unique type identificator string.
 func (t *itype) id() (res string) {
 	if t.name != "" {
 		if t.path != "" {
-			return t.path + "." + t.name
+			return fixPkgPathVendoring(t.path) + "." + t.name
 		}
 		return t.name
 	}
@@ -1123,7 +1133,7 @@ func (t *itype) id() (res string) {
 	case valueT:
 		res = ""
 		if t.rtype.PkgPath() != "" {
-			res += t.rtype.PkgPath() + "."
+			res += fixPkgPathVendoring(t.rtype.PkgPath()) + "."
 		}
 		res += t.rtype.Name()
 	}
